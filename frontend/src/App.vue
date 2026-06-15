@@ -52,6 +52,14 @@ const categories = computed(() =>
   [...new Set(products.value.map(p => p.category))].sort()
 )
 
+const hasFilters = computed(() => !!(search.value || catFilter.value))
+
+function clearFilters() {
+  search.value = ''
+  catFilter.value = ''
+  fetchProducts()
+}
+
 // คำนวณ 4 ตัวเลข dashboard stats
 const stats = computed(() => ({
   total:      products.value.length,
@@ -239,6 +247,7 @@ onMounted(fetchProducts)
           <option value="stock-asc">สต็อก น้อย → มาก</option>
           <option value="stock-desc">สต็อก มาก → น้อย</option>
         </select>
+        <button v-if="hasFilters" class="btn-clear" @click="clearFilters">✕ ล้างตัวกรอง</button>
         <span class="result-count" v-if="!loading">
           แสดง {{ filtered.length }} / {{ products.length }} รายการ
         </span>
@@ -433,6 +442,12 @@ onMounted(fetchProducts)
 }
 .input-select:focus { border-color: #10b981; }
 .result-count { font-size: .82rem; color: #64748b; white-space: nowrap; }
+.btn-clear {
+  padding: .6rem .9rem; border: 1.5px solid #e2e8f0; border-radius: 8px;
+  background: #fff; font-size: .85rem; font-weight: 600; color: #64748b;
+  cursor: pointer; transition: all .2s; white-space: nowrap;
+}
+.btn-clear:hover { background: #f1f5f9; color: #334155; border-color: #cbd5e1; }
 
 .state-box { text-align: center; padding: 4rem 1rem; color: #64748b; }
 .state-icon { font-size: 3rem; margin-bottom: .75rem; }
