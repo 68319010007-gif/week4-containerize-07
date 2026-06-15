@@ -146,6 +146,28 @@ async function deleteProduct(id) {
   }
 }
 
+// ปรับสต็อกด่วน (+/- 1 ชิ้น)
+async function adjustStock(p, delta) {
+  const newStock = p.stock + delta
+  if (newStock < 0) return
+  try {
+    const res = await fetch(`/api/products/${p.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: p.name, category: p.category,
+        price: parseFloat(p.price), stock: newStock,
+        description: p.description || ''
+      })
+    })
+    if (!res.ok) throw new Error()
+    p.stock = newStock
+    showToast(delta > 0 ? `เพิ่มสต็อก ${p.name} แล้ว` : `ลดสต็อก ${p.name} แล้ว`)
+  } catch {
+    showToast('ไม่สามารถปรับสต็อกได้', 'error')
+  }
+}
+
 // คืน CSS class ตาม stock level (ใช้กับ stock bar และตัวเลข)
 function stockClass(s) {
   if (s <= 0) return 'out'    // หมด
@@ -171,7 +193,7 @@ onMounted(fetchProducts)
 </script>
 
 <template>
-  <div>
+  <div class="app-root">
 
     <!-- HEADER -->
     <header class="app-header">
@@ -285,11 +307,15 @@ onMounted(fetchProducts)
             <div class="stock-info">
               <div class="stock-row">
                 <span class="stock-label">สต็อก</span>
-                <span class="stock-num" :class="stockClass(p.stock)">
-                  {{ p.stock.toLocaleString() }} ชิ้น
-                  <span v-if="p.stock <= 0"> — หมดแล้ว!</span>
-                  <span v-else-if="p.stock < 10"> — ใกล้หมด!</span>
-                </span>
+                <div class="stock-controls">
+                  <button class="btn-stock" :disabled="p.stock <= 0" @click="adjustStock(p, -1)" title="ลด 1">−</button>
+                  <span class="stock-num" :class="stockClass(p.stock)">
+                    {{ p.stock.toLocaleString() }} ชิ้น
+                    <span v-if="p.stock <= 0"> — หมดแล้ว!</span>
+                    <span v-else-if="p.stock < 10"> — ใกล้หมด!</span>
+                  </span>
+                  <button class="btn-stock" @click="adjustStock(p, 1)" title="เพิ่ม 1">+</button>
+                </div>
               </div>
               <div class="stock-track">
                 <div
@@ -380,6 +406,7 @@ onMounted(fetchProducts)
 <style scoped>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+.app-root { min-height: 100vh; background: #f8fafc; }
 .app-header {
   position: sticky; top: 0; z-index: 100;
   background: #fff; border-bottom: 1px solid #e2e8f0;
@@ -489,7 +516,17 @@ onMounted(fetchProducts)
 .product-price { font-size: 1.25rem; font-weight: 800; color: #059669; }
 
 .stock-info { margin-top: .85rem; }
-.stock-row  { display: flex; justify-content: space-between; font-size: .82rem; margin-bottom: .3rem; }
+.stock-row  { display: flex; justify-content: space-between; align-items: center; font-size: .82rem; margin-bottom: .3rem; }
+.stock-controls { display: flex; align-items: center; gap: .4rem; }
+.btn-stock {
+  width: 26px; height: 26px; border-radius: 6px;
+  border: 1px solid #e2e8f0; background: #fff;
+  font-size: 1rem; font-weight: 700; line-height: 1;
+  cursor: pointer; color: #334155; transition: all .15s;
+  display: flex; align-items: center; justify-content: center;
+}
+.btn-stock:hover:not(:disabled) { background: #ecfdf5; border-color: #10b981; color: #059669; }
+.btn-stock:disabled { opacity: .35; cursor: not-allowed; }
 .stock-label { color: #64748b; }
 .stock-num   { font-weight: 700; }
 .stock-num.out  { color: #9ca3af; }
