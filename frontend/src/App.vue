@@ -9,11 +9,19 @@ const catFilter     = ref('')       // category ที่กำลัง filter
 const showModal     = ref(false)    // แสดง/ซ่อน modal เพิ่ม/แก้ไข
 const editingId     = ref(null)     // null = กำลัง add, มีค่า = กำลัง edit
 const confirmDelete = ref(null)     // เก็บ product ที่จะลบ (ใช้ confirm dialog)
+const toast         = ref(null)     // { message, type } สำหรับแจ้งเตือน
 
 // ข้อมูลในฟอร์ม modal
 const form = ref({ name: '', category: '', price: '', stock: 0, description: '' })
 
 let debounceTimer = null            // สำหรับ debounce search input
+let toastTimer    = null            // สำหรับ auto-hide toast
+
+function showToast(message, type = 'success') {
+  clearTimeout(toastTimer)
+  toast.value = { message, type }
+  toastTimer = setTimeout(() => { toast.value = null }, 3000)
+}
 // ── Computed ─────────────────────────────────────────────────────
 
 // กรองสินค้าตาม search + catFilter พร้อมกัน
@@ -97,16 +105,28 @@ async function saveProduct() {
   }
   const url    = editingId.value ? `/api/products/${editingId.value}` : '/api/products'
   const method = editingId.value ? 'PUT' : 'POST'
-  await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-  showModal.value = false
-  fetchProducts()   // reload สินค้าใหม่
+  try {
+    const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    if (!res.ok) throw new Error()
+    showModal.value = false
+    showToast(editingId.value ? 'บันทึกการเปลี่ยนแปลงสำเร็จ' : 'เพิ่มสินค้าใหม่แล้ว')
+    fetchProducts()
+  } catch {
+    showToast('ไม่สามารถบันทึกได้ กรุณาลองใหม่', 'error')
+  }
 }
 
 // ลบสินค้า
 async function deleteProduct(id) {
-  await fetch(`/api/products/${id}`, { method: 'DELETE' })
-  confirmDelete.value = null
-  fetchProducts()
+  try {
+    const res = await fetch(`/api/products/${id}`, { method: 'DELETE' })
+    if (!res.ok) throw new Error()
+    confirmDelete.value = null
+    showToast('ลบสินค้าแล้ว')
+    fetchProducts()
+  } catch {
+    showToast('ไม่สามารถลบได้ กรุณาลองใหม่', 'error')
+  }
 }
 
 // คืน CSS class ตาม stock level (ใช้กับ stock bar และตัวเลข)
@@ -320,6 +340,14 @@ onMounted(fetchProducts)
       </div>
     </div>
 
+    <!-- TOAST -->
+    <Transition name="toast">
+      <div v-if="toast" class="toast" :class="'toast-' + toast.type">
+        <span class="toast-icon">{{ toast.type === 'error' ? '❌' : '✅' }}</span>
+        {{ toast.message }}
+      </div>
+    </Transition>
+
   </div>
 </template>
 
@@ -508,6 +536,19 @@ onMounted(fetchProducts)
   font-weight: 700; cursor: pointer;
 }
 .btn-danger-confirm:hover { background: #b91c1c; }
+
+.toast {
+  position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 600;
+  display: flex; align-items: center; gap: .5rem;
+  padding: .75rem 1.25rem; border-radius: 10px;
+  font-size: .9rem; font-weight: 600;
+  box-shadow: 0 4px 20px rgba(0,0,0,.15);
+}
+.toast-success { background: #ecfdf5; color: #065f46; border: 1px solid #6ee7b7; }
+.toast-error   { background: #fef2f2; color: #991b1b; border: 1px solid #fca5a5; }
+.toast-icon { font-size: 1rem; }
+.toast-enter-active, .toast-leave-active { transition: all .3s ease; }
+.toast-enter-from, .toast-leave-to { opacity: 0; transform: translateY(1rem); }
 
 @media (max-width: 640px) {
   .form-row { grid-template-columns: 1fr; }
