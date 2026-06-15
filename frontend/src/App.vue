@@ -204,6 +204,7 @@ onMounted(fetchProducts)
           <div class="logo-sub">ระบบจัดการสินค้าคงคลัง</div>
         </div>
       </div>
+      <span class="header-author">นายชัยวัฒน์ ฮาดนิล</span>
       <button class="btn-add" @click="openAdd">+ เพิ่มสินค้า</button>
     </header>
 
@@ -334,6 +335,12 @@ onMounted(fetchProducts)
       </div>
 
     </main>
+
+    <footer class="app-footer">
+      <span>StockPro — ระบบจัดการสินค้าคงคลัง</span>
+      <span class="footer-author">พัฒนาโดย นายชัยวัฒน์ ฮาดนิล</span>
+    </footer>
+
         <!-- ADD/EDIT MODAL -->
     <div class="overlay" v-if="showModal" @click.self="showModal = false">
       <div class="modal">
@@ -406,7 +413,7 @@ onMounted(fetchProducts)
 <style scoped>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-.app-root { min-height: 100vh; background: #f8fafc; }
+.app-root { min-height: 100vh; background: #f8fafc; display: flex; flex-direction: column; }
 .app-header {
   position: sticky; top: 0; z-index: 100;
   background: #fff; border-bottom: 1px solid #e2e8f0;
@@ -418,8 +425,15 @@ onMounted(fetchProducts)
 .logo-icon { font-size: 1.6rem; }
 .logo-name { font-weight: 800; font-size: 1.15rem; color: #065f46; line-height: 1; }
 .logo-sub  { font-size: .72rem; color: #64748b; }
-.btn-add {
+.header-author {
   margin-left: auto;
+  font-size: .85rem; font-weight: 600; color: #475569;
+  padding: .35rem .85rem;
+  background: #f1f5f9; border-radius: 20px;
+  white-space: nowrap;
+}
+.btn-add {
+  margin-left: .75rem;
   background: #10b981; color: #fff;
   border: none; border-radius: 8px;
   padding: .55rem 1.2rem; font-size: .9rem; font-weight: 700;
@@ -427,7 +441,17 @@ onMounted(fetchProducts)
 }
 .btn-add:hover { background: #059669; }
 
-.main { max-width: 1280px; margin: 0 auto; padding: 1.75rem 1.5rem; }
+.app-footer {
+  margin-top: auto;
+  padding: 1.25rem 1.5rem;
+  background: #fff; border-top: 1px solid #e2e8f0;
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: .5rem;
+  font-size: .82rem; color: #64748b;
+}
+.footer-author { font-weight: 600; color: #065f46; }
+
+.main { max-width: 1280px; margin: 0 auto; padding: 1.75rem 1.5rem; flex: 1; }
 
 .stats-grid {
   display: grid;
@@ -622,5 +646,7 @@ onMounted(fetchProducts)
 @media (max-width: 640px) {
   .form-row { grid-template-columns: 1fr; }
   .stats-grid { grid-template-columns: 1fr 1fr; }
+  .header-author { display: none; }
+  .app-footer { justify-content: center; text-align: center; }
 }
 </style>
